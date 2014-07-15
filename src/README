@@ -1,0 +1,224 @@
+eliagrady
+
+================================================
+=  README for ex3: MyFileManager MyNameServer  =
+================================================
+
+usage:  oop.ex3.fileManager.MyFileManager NAMESERVERSFILEPATH DIRECTORYTOMANAGE PORT
+usage:  oop.ex3.nameserver.MyNameServer PORT
+
+when NAMESERVERSFILEPATH stands for a text file, ( *.txt) that contain nameservers one per line 
+written in the specific exercise-specified format (ip%port - when the '%' seperator can be changed with ease through Protocol.java constant)
+
+
+
+========================
+= Jar File Description =
+========================
+
+README - this file you are currently reading
+
+./ex3/filemanager/
+DownloadAttemptRequest.java - // DESCRIPTION : Represents a file request this file manager sends.
+DownloadThread.java - // DESCRIPTION : Represent a download service.
+FileManagerDataBase.java - // DESCRIPTION : Represents a file manager's data base. Holds files and nameservers.
+FileManagerRequestSender.java - // DESCRIPTION : Represents the requests that this file manager can send to any of it's name servers.
+GetNameServersRequest.java // DESCRIPTION : Represents a request that asks the name server for it's list of name servers
+InitializeNameServerRequest.java - // DESCRIPTION : Represents a request for a new session. it deals with any nameserver whether or not it knows this file manager. 
+ListenThread.java - // DESCRIPTION : this thread listens to incoming download requests, and send them to be handled.
+MyFileManager.java - // DESCRIPTION : My File Manager. Allows running commands that can manage a 'download' directory. Connects to other file managers using a go-between name server.
+SearchFileRequest.java - // DESCRIPTION : Represents a search file request this file manager sends
+ServerSyntaxExeption.java - // DESCRIPTION : Represent an Exception.(Syntax:(ip%port))
+UploadThread.java - // DESCRIPTION : Represents an upload Thread that expects requests to this file manager for one of it's files.
+UserInputThread.java - // DESCRIPTION : Represents a thread that is responsible of handling incoming user commands.
+
+./ex3/filemanager/commands/
+AddCommand.java - // DESCRIPTION: A Command That tries to add a given filename to this file managers folder
+Command.java - // DESCRIPTION : Represents a user input command.
+CommandParser.java - // DESCRIPTION : A parser that parses and executes user input commands.
+DirAllFilesCommand.java - // DESCRIPTION : A command that prints all files accessible to this file manager.
+DirCommand.java - // DESCRIPTION: A command that print all files this file manager have.
+DirServersCommand.java -// DESCRIPTION : A command that print all name servers this file manager know.
+FireServersCommand.java - // DESCRIPTION : A command that send a GOAWAY message to all known NameServers.
+NotifyNameServerRequest.java - // DESCRIPTION : A command that notify a name server about a change in one of it's files (can update that it have/don't have a file
+QuitCommand.java- // DESCRIPTION : A command that send a GOAWAY message to all known NameServers.
+RemoveCommand.java - // DESCRIPTION : A command that deletes a file from this file manager's database.
+RenameCommand.java - // DESCRIPTION : A command that renames a file this file manager holds.
+UnknownCommandException.java -// DESCRIPTION : An UnknownCommandException represent a command input this file manager does not familiar with.
+
+./ex3/nameserver/
+ListenService.java - // DESCRIPTION : A thread that this name server runs to handle incoming requests.
+MyNameServer.java- // DESCRIPTION: A Name Server. A go-between for file managers, that holds information about it's known file managers and enables them to get in touch with other file manager clients.
+NameServerDataBase.java - // DESCRIPTION : This class holds all data of this name server:known file managers, known name servers etc.
+
+./ex3/nameserver/requests/
+BeginSessionRequest.java - // DESCRIPTION : Every new session with a file manager begins with this (When a BEGIN message is sent)
+CloseSessionExeption.java
+ContainUpdateRequest.java - // DESCRIPTION : An update about a file from a file manager. (contain)
+DontContainUpdateRequest.java - // DESCRIPTION : An update about a file from a file manager (not contain)
+GoAwayRequest.java - // DESCRIPTION : Request to shutdown this name server.
+Request.java - // DESCRIPTION : A Request this name server accepts.
+RequestParser.java - // DESCRIPTION : A parser that parses and executes incoming requests. 
+UnknownRequestException.java - // DESCRIPTION : Occurs when a unknown request is sent to this name server.
+WantFileRequest.java - // DESCRIPTION : A file request this name server deals with.
+WantAllFilesRequest.java - // DESCRIPTION : Request for all known files that this name server know about.
+WantServersRequest.java - // DESCRIPTION : Request for this name server known name servers
+WelcomeSessionRequest.java - // DESCRIPTION : When this name server does not know a file manager it starts a welcome session with him.
+
+./ex3/protocol/
+Protocol.java - // DESCRIPTION : Represents the language the name server and file manager speak.also contains methods that simplify writing in this language. 
+ProtocolExeption.java - // DESCRIPTION : An Exception that occur when someone didn't follow the protocol.
+
+./ex3/resources/
+MyDataInputStream.java - // DESCRIPTION : MyDataInputStream wraps a DataInputStream to extend it's functionality. used for debuging, etc.
+MyDataOutputStream.java - // DESCRIPTION : MyDataOutputStream wraps a DataOutputStream to extend it's functionality. used for debuging, etc.
+SyncedHashSet.java - // DESCRIPTION : Represents a synchronized hash set. a hash set that is thread-safe
+SyncedTreeSet.java - // DESCRIPTION :  Represents a synchronized tree set. a self ordered set that is thread-safe
+
+
+
+
+
+
+
+============
+=  Design  =
+============
+
+The program is devided to 4 main packages and 2 sub-packages as described in the file list above:
+ 
+	(1) oop.ex3.filemanager - contains main filemanager program
+		(1.1) oop.ex3.filemanager.commands - contains all parsing command mechanism
+
+	(2) oop.ex3.nameserver - contains all the functions classes
+		(2.1) oop.ex3.nameserver.requests - contains all the functions classes
+
+	(3) oop.ex3.protocol - contains the Protocol.java class that holds all language variables.
+
+        (4) oop.ex3.resources - contains data structures and enhanced input/output (for debugging)
+
+
+Structure of the oop.ex3.filemanager package:
+-------------------------------------------
+
+MyFileManager.java holds an instance of FileManagerDataBase.java that maintains a set of files and known nameservers.
+ It  also allows its users to remove\rename existing files and to obtain new files from other FileManagers. 
+On startup, MyFileManager receives as input its list of files and reads a list of NameServers from a file. 
+Then, it sends its list of filenames and NameServer names to all the NameServers on its NameServers’ list. 
+Following, it receives commands from the standard input which asks it either to delete\rename some of his files or
+download new files (by requesting them from other FileManagers). A FileManager also listens and
+performs upload requests from other FileManagers.
+I chose a "command" design pattern to run commands, in order to make adding new commands easier.
+I chose also do hold all the file names in a TreeSet, so that they will be always in order, so i wrapped a TreeSet
+that is not thread safe, and created SyncedTreeSet so that it will be thread safe. 
+I also chose to make the ListenTread.java , that is called from main, sort of factory for upload requests. on connection,
+the ListenThread open a new socket to accept another connection.
+Also, if for any reason a command relate to a name server, the FileManagerRequestSender deals with these requests 
+(DownloadAttemptRequest ,GetNameServersRequest ,NotifyNameServerRequest, InitializeNameServerRequest and SearchFileRequest)
+these operate according to thier description.
+
+
+-------------------------------------------------------
+Structure of the oop.ex3.filemanager.commands package:
+-------------------------------------------------------
+
+About the whole package: 
+there is the Command.java that is an abstract class that you need to implement to add commands of your own,
+there is the CommandParser that parse and execute commands, add a new instance of the command to _knownCommands
+theres all the known commands, each in it's own class.
+theres also a UnknownCommandExeption , that is thrown when the user inserts a bad command input
+
+-------------------------------------------------------
+Structure of the oop.ex3.nameserver package:
+-------------------------------------------------------
+
+MyNameServer.java , open a new name server and initialize it's ListenService , that is a thread that runs and
+listens to incoming connections. on any introduction, change ,modification, or request - NameServerDataBase.java
+hold records of information about the files, filemanagers and nameservers.
+I chose to have a ConcurrentHashMap , holding a fileManager's ip as a key, and it's value is the same SyncedTreeSet
+used by this fileManager to keep file names.
+
+-------------------------------------------------------
+Structure of the oop.ex3.nameserver.requests package:
+-------------------------------------------------------
+
+this, like commands, also uses same design pattern ('command')
+theres a generic abstract request : Request.java is the abstract class, RequestParser.java parses the first word in
+the session so that it can understand what to do with it. since the second incoming word can be important (not END)
+every request knows if to recive the end that comes after the request or not.
+there's also an UnknownRequestExeption.java that is thrown when the incoming request is unknown.
+
+---------------------------------------------------------------
+Structure of the oop.ex3.protocol
+---------------------------------------------------------------
+Holds the important Protocol.java class that handles all conventions. I also implemented a quick common sent messages
+recive/send methods that gets as input MyDataInputStream or MyDataOutputStream. only thing needed to be mentioned is 
+the structure of the method reciveMessage. as described it attempt reading a message (specific or not) from an input stream.
+if you enter null as a first parameter, you will get back any message sent. if you bring a specific message instead of
+null, you explicitlly expecting this message only and will get an exeption if it's some other message.
+
+---------------------------------------------------------------
+Structure of the oop.ex3.resource
+---------------------------------------------------------------
+A wrapped DataInputStream and a DataOutputStream goes into MyDataInputStream and MyDataOutputStream and can also print out
+the messages read / written.
+A TreeSet was wrapped to SyncedTreeSet by having some methods synchronized, the same with SyncedHashSet
+
+------------------------------------
+                Q&A
+------------------------------------
+
+Describe in the README how your system allows addition of (1) a new message type (2) a new 
+command\communication scenario:
+
+My solution offers a easy way of adding new messages. It follows by editing the Protocol.java file, 
+to add a new message type (NEWMESSAGE_MSG) as a constant.
+As mentioned, my solotion relies entirely on the Protocol.java for any send/receive and naming conventions, 
+so changing a constatnt should not be an issue.
+After adding a constant, add a request class that extends Request.java for the name server, so that 
+it will accept the new message type and search for it in it's list of known requests. In addition, 
+create a new instance of your request in the RequestParser.java, so that it will be on it's list of known requests.
+
+Then create a second class and put it in the filemanager.commands package,
+name it NEWREQUESTRequest.java (still follow java's coding style and conventions). After this, go to 
+FileManagerRequestSender.java and add a new instance of your new class inside it's list of requests.
+
+Now both of them know this new message.
+
+Fore adding new commands to the file manager, simply add a new NEWCOMMANDCommand.java class inside the 
+filemanager.commands package, and also add a new instance of your class inside the CommandParser.java 's 
+list of known commands, so that it will recognize your command at runtime.
+
+
+Describe in  the  README at least two  ways that can cause your system to crash\become unresponsive 
+by connecting to it with some external implementation of FileManager or NameServer. 
+Propose (you  dont have to implement) 
+modification of your system which would allow to avoid each of these attacks.
+
+there are 2 main sercuity issues: the first is lack of connection restriction mechanism. 
+there can be as many incoming connections as file managers keeps connecting to a name server and vice verca. 
+It exposes the system to a brute port attack, in which incoming connections keeps coming in 
+overwhelming masses causing the local machine running the server to choke.
+
+fix: limit incoming connections by a certain number and add a timeout mechanism,
+restricting incoming connection from the same address in less then a few seconds or so.
+
+
+the second security issue is identification. as part of the protocol, a session begins with an identification
+ of a file manager by his ip and port , but not nessessary his true ip port. that enables a malicious file manager
+ to identify itself as other file managers (he can get thier addresses from the name server)
+and send a not contain file messages so that there will be no known file in any nameserver. also , a malicious program
+ can identify itself as a name server and on file request it can give you itself as a file manager and send you a virus
+ instead of the file you requested.
+
+fix: on welcome sessions , after decleration of ip/ port etc. , add to the Protocol a special key that the nameserver
+ gives to the file manager. the key should be unique to every file manager, and it will serve it's purpose as an authnication
+ method (simply adding a AUTH code END to the BEGIN sesion)
+
+===========================
+=      Side Notes         =
+===========================
+I saw in my mind how bittorrent works in this exercise, and it's pretty neat. 
+oh, and i did add the bonus (AddAllFiles stuff).
+
+
